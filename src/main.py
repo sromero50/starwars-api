@@ -44,6 +44,12 @@ def get_users():
 
     return jsonify(all_user), 200
 
+@app.route('/user/<int:id>', methods=['GET'])
+def get_user_index(id):
+    selected_user = User.query.get(id)
+    user = selected_user.serialize()
+    return user, 200
+
 @app.route('/user', methods=['POST'])
 def add_new_user():
     body = request.get_json()
@@ -81,11 +87,11 @@ def get_character():
 
     return jsonify(all_character), 200
 
-# @app.route('/character/<int:id>', methods=['GET'])
-# def get_character_index(id):
-#     user1 = Character.query.get(id)
-#     a_dict = jsons.dump(user1)
-#     return a_dict, 200
+@app.route('/character/<int:id>', methods=['GET'])
+def get_character_index(id):
+    selected_character = Character.query.get(id)
+    character = selected_character.serialize()
+    return character, 200
 
 @app.route('/character', methods=['POST'])
 def add_new_character():
@@ -127,12 +133,11 @@ def get_planet():
 
     return jsonify(all_planet), 200
 
-# @app.route('/planet/<int:position>', methods=['GET'])
-# def get_planet_index(position):
-
-#     print("This is the position to show: ",position)
-    
-#     return jsonify(planets[position]), 200
+@app.route('/planet/<int:id>', methods=['GET'])
+def get_planet_index(id):
+    selected_planet = Planet.query.get(id)
+    planet = selected_planet.serialize()
+    return planet, 200
 
 @app.route('/planet', methods=['POST'])
 def add_new_planet():
@@ -174,12 +179,11 @@ def get_vehicle():
 
     return jsonify(all_vehicle), 200
 
-# @app.route('/vehicle/<int:position>', methods=['GET'])
-# def get_vehicle_index(position):
-
-#     print("This is the position to show: ",position)
-    
-#     return jsonify(vehicles[position]), 200
+@app.route('/vehicle/<int:id>', methods=['GET'])
+def get_vehicle_index(id):
+    selected_vehicle = Vehicle.query.get(id)
+    vehicle = selected_vehicle.serialize()
+    return vehicle, 200
 
 @app.route('/vehicle', methods=['POST'])
 def add_new_vehicle():
