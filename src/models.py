@@ -143,3 +143,29 @@ class FavoriteVehicle(db.Model):
             "user_id": self.user_id,
             "vehicle_id": self.vehicle_id
         }
+
+
+# class Favorite(db.Model):
+#     __tablename__ = 'favorite'
+#     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+#     fav_character_id = db.Column(db.Integer, db.ForeignKey('favoriteCharacter.id'))
+#     fav_planet_id = db.Column(db.Integer, db.ForeignKey('favoritePlanet.id'))
+#     fav_vehicle_id = db.Column(db.Integer, db.ForeignKey('FavoriteVehicle.id'))
+#     user = db.relationship(User)
+#     favorite_characters = db.relationship('FavoriteCharacter')
+#     favorite_planets = db.relationship('FavoritePlanet')
+#     favorite_vehicles = db.relationship('FavoriteVehicle')
+    
+
+#     def __repr__(self):
+#         return '<Favorite %r>' % self.user_id
+
+
+#     def serialize(self):
+#         return {
+#             "user_id": self.user_id,
+#             "favorite_characters": list(map(lambda x: x.serialize(), self.favorite_characters)),
+#             "favorite_planets": list(map(lambda x: x.serialize(), self.favorite_planets)),
+#             "favorite_vehicles": list(map(lambda x: x.serialize(), self.favorite_vehicles))
+
+#         }

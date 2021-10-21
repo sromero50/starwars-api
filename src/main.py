@@ -215,9 +215,9 @@ def delete_vehicle(id):
     return jsonify(all_vehicle), 200
 
 ####################################### Favorites #################################################
-@app.route('/favorite/character', methods=['GET'])
+@app.route('/favorite/', methods=['GET'])
 def get_fav_character():
-    fav_user = FavoriteCharacter.query.all()
+    fav_user = User.query.all()
     fav = list(map(lambda x: x.serialize(), fav_user))
     return jsonify(fav), 200
 
@@ -245,12 +245,20 @@ def add_new_fav_vehicle(vehicle_id,user_id):
 
 @app.route('/user/<int:user_id>/favorite/character/<int:character_id>', methods=['DELETE'])
 def delete_fav_character(character_id,user_id):
-    favorite = FavoriteCharacter(character_id=character_id)
     
+    favorite = User.query.get(user_id)
     if favorite is None:
         raise APIException('User not found', status_code=404)
+    fav = favorite.serialize()
+    
+    print(fav['favorite_characters'])
+    for i in fav['favorite_characters']:
+        if i['user_id']==user_id and i['character_id']==character_id:
+            fav['favorite_characters'].remove(i)
+        break
         
-    db.session.delete(favorite)
+        
+    db.session.delete(fav)
     db.session.commit()
 
     return "ok", 200
