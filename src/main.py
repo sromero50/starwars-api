@@ -11,7 +11,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, Character, Planet, Vehicle
+from models import db, User, Character, Planet, Vehicle, FavoriteCharacter
 #from models import Person
 
 app = Flask(__name__)
@@ -199,7 +199,6 @@ def add_new_vehicle():
     vehicle = Vehicle(name=body['name'], vehicle_class=body['vehicle_class'], manufacturer=body['manufacturer'])
     db.session.add(vehicle)
     db.session.commit()
-    vehicles.append(body)
     return "ok", 200
 
 
@@ -215,7 +214,53 @@ def delete_vehicle(id):
 
     return jsonify(all_vehicle), 200
 
+####################################### Favorites #################################################
+@app.route('/favorite/character', methods=['GET'])
+def get_fav_character():
+    fav_user = FavoriteCharacter.query.all()
+    fav = list(map(lambda x: x.serialize(), fav_user))
+    return jsonify(fav), 200
 
+
+@app.route('/favorite/<int:user_id>', methods=['GET'])
+def get_fav_character_index(user_id):
+    selected_fav = FavoriteCharacter.query.get(user_id)
+    fav = selected_fav.serialize()
+    return fav, 200
+
+@app.route('/user/<int:user_id>/favorite/character/<int:character_id>', methods=['POST'])
+def add_new_fav_character(character_id,user_id):
+    favorite = FavoriteCharacter(user_id=user_id ,character_id=character_id)
+    db.session.add(favorite)
+    db.session.commit()
+    return "ok", 200
+
+# @app.route('/user/<int:user_id>/favorite/planet/<int:planet_id>', methods=['POST'])
+# def add_new_fav_planet(planet_id,user_id):
+#     favorite = FavoritePlanet(user_id=user_id ,planet_id=planet_id)
+#     db.session.add(favorite)
+#     db.session.commit()
+#     return "ok", 200
+
+# @app.route('/user/<int:user_id>/favorite/vehicle/<int:vehicle>', methods=['POST'])
+# def add_new_fav_vehicle(vehicle,user_id):
+#     favorite = FavoriteVehicle(user_id=user_id ,vehicle=vehicle)
+#     db.session.add(favorite)
+#     db.session.commit()
+#     return "ok", 200
+
+
+
+@app.route('/favorite/character/<int:user_id>', methods=['DELETE'])
+def delete_fav_character(user_id):
+    fav = FavoriteCharacter.query.get(user_id)
+    if fav is None:
+        raise APIException('User not found', status_code=404)
+        
+    db.session.delete(fav)
+    db.session.commit()
+
+    return "ok", 200
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
