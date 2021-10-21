@@ -8,7 +8,9 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), unique=False, nullable=False)
     is_active = db.Column(db.Boolean(), unique=False, nullable=False)
-    # favorite_id = db.relationship('FavoriteCharacter', backref='user')
+    favorite_characters = db.relationship('FavoriteCharacter')
+    favorite_planets = db.relationship('FavoritePlanet')
+    favorite_vehicles = db.relationship('FavoriteVehicle')
 
     def __repr__(self):
         return '<User %r>' % self.email
@@ -17,8 +19,9 @@ class User(db.Model):
         return {
             "id": self.id,
             "email": self.email,
-            "favorite_id": self.favorite_id
-            # do not serialize the password, its a security breach
+            "favorite_characters": list(map(lambda x: x.serialize(), self.favorite_characters)),
+            "favorite_planets": list(map(lambda x: x.serialize(), self.favorite_planets)),
+            "favorite_vehicles": list(map(lambda x: x.serialize(), self.favorite_vehicles))
         }
 
 
@@ -101,3 +104,42 @@ class FavoriteCharacter(db.Model):
             "character_id": self.character_id
         }
 
+class FavoritePlanet(db.Model):
+    __tablename__ = 'favoritePlanet'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    planet_id = db.Column(db.Integer, db.ForeignKey('planet.id'))
+    user = db.relationship(User)
+    planet = db.relationship(Planet)
+
+
+    def __repr__(self):
+        return '<FavoritePlanet %r>' % self.id
+
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "planet_id": self.planet_id
+        }
+
+class FavoriteVehicle(db.Model):
+    __tablename__ = 'FavoriteVehicle'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
+    user = db.relationship(User)
+    vehicle = db.relationship(Vehicle)
+
+
+    def __repr__(self):
+        return '<FavoriteVehicle %r>' % self.id
+
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "vehicle_id": self.vehicle_id
+        }
