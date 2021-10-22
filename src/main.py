@@ -243,26 +243,65 @@ def add_new_fav_vehicle(vehicle_id,user_id):
     db.session.commit()
     return "ok", 200
 
-@app.route('/user/<int:user_id>/favorite/character/<int:character_id>', methods=['DELETE'])
-def delete_fav_character(character_id,user_id):
+@app.route('/favorite/character/<int:character_id>', methods=['DELETE'])
+def delete_fav_character(character_id):
     
-    favorite = User.query.get(user_id)
+    favorite = FavoriteCharacter.query.get(character_id)
     if favorite is None:
         raise APIException('User not found', status_code=404)
-    fav = favorite.serialize()
+    # fav = favorite.serialize()
     
-    print(fav['favorite_characters'])
-    for i in fav['favorite_characters']:
-        if i['user_id']==user_id and i['character_id']==character_id:
-            fav['favorite_characters'].remove(i)
-        break
+    # print(fav['favorite_characters'])
+    # for i in fav['favorite_characters']:
+    #     if i['user_id']==user_id and i['character_id']==character_id:
+    #         fav['favorite_characters'].remove(i)
+    #     break
         
         
-    db.session.delete(fav)
+    db.session.delete(favorite)
     db.session.commit()
 
     return "ok", 200
 
+@app.route('/favorite/vehicle/<int:vehicle_id>', methods=['DELETE'])
+def delete_fav_vehicle(vehicle_id):
+    
+    favorite = FavoriteVehicle.query.get(vehicle_id)
+    if favorite is None:
+        raise APIException('User not found', status_code=404)
+    # fav = favorite.serialize()
+    
+    # print(fav['favorite_characters'])
+    # for i in fav['favorite_characters']:
+    #     if i['user_id']==user_id and i['character_id']==character_id:
+    #         fav['favorite_characters'].remove(i)
+    #     break
+        
+        
+    db.session.delete(favorite)
+    db.session.commit()
+
+    return "ok", 200
+
+@app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
+def delete_fav_planet(planet_id):
+    
+    favorite = FavoritePlanet.query.get(planet_id)
+    if favorite is None:
+        raise APIException('User not found', status_code=404)
+    # fav = favorite.serialize()
+    
+    # print(fav['favorite_characters'])
+    # for i in fav['favorite_characters']:
+    #     if i['user_id']==user_id and i['character_id']==character_id:
+    #         fav['favorite_characters'].remove(i)
+    #     break
+        
+        
+    db.session.delete(favorite)
+    db.session.commit()
+
+    return "ok", 200
 
 # @app.route('/favorite/character/<int:user_id>', methods=['DELETE'])
 # def delete_fav_character(user_id):

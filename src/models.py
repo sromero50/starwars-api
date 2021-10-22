@@ -8,9 +8,10 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), unique=False, nullable=False)
     is_active = db.Column(db.Boolean(), unique=False, nullable=False)
-    favorite_characters = db.relationship('FavoriteCharacter')
-    favorite_planets = db.relationship('FavoritePlanet')
-    favorite_vehicles = db.relationship('FavoriteVehicle')
+    favorite_characters = db.relationship('FavoriteCharacter', passive_deletes=True)
+    favorite_planets = db.relationship('FavoritePlanet', passive_deletes=True)
+    favorite_vehicles = db.relationship('FavoriteVehicle', passive_deletes=True)
+    
 
     def __repr__(self):
         return '<User %r>' % self.email
@@ -33,7 +34,7 @@ class Character(db.Model):
     gender = db.Column(db.String(150), nullable=False)
     hair_color = db.Column(db.String(150), nullable=False)
     eye_color = db.Column(db.String(150),  nullable=False)
-    # favorite_id = db.relationship('FavoriteCharacter', backref='character')
+    
 
     def __repr__(self):
         return '<Character %r>' % self.name
@@ -88,7 +89,7 @@ class FavoriteCharacter(db.Model):
     __tablename__ = 'favoriteCharacter'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    character_id = db.Column(db.Integer, db.ForeignKey('character.id'))
+    character_id = db.Column(db.Integer, db.ForeignKey('character.id', ondelete='CASCADE'))
     user = db.relationship(User)
     character = db.relationship(Character)
 
@@ -108,7 +109,7 @@ class FavoritePlanet(db.Model):
     __tablename__ = 'favoritePlanet'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    planet_id = db.Column(db.Integer, db.ForeignKey('planet.id'))
+    planet_id = db.Column(db.Integer, db.ForeignKey('planet.id', ondelete='CASCADE'))
     user = db.relationship(User)
     planet = db.relationship(Planet)
 
@@ -128,7 +129,7 @@ class FavoriteVehicle(db.Model):
     __tablename__ = 'FavoriteVehicle'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id', ondelete='CASCADE'))
     user = db.relationship(User)
     vehicle = db.relationship(Vehicle)
 
