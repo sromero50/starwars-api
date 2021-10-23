@@ -86,6 +86,8 @@ def protected():
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
 
+    
+
 ##################### Users ##############################################################################
 @app.route('/user', methods=['GET'])
 def get_users():
@@ -144,7 +146,9 @@ def add_new_character():
     character1 = Character(name=body['name'], gender=body['gender'], hair_color=body['hair_color'], eye_color=body["eye_color"])
     db.session.add(character1)
     db.session.commit()
-    return "ok", 200
+    character_query = Character.query.all()
+    all_character = list(map(lambda x: x.serialize(), character_query))
+    return jsonify(all_character), 200
 
 
 @app.route('/character/<int:id>', methods=['DELETE'])
@@ -188,7 +192,11 @@ def add_new_planet():
     planet = Planet(name=body['name'], population=body['population'], terrain=body['terrain'])
     db.session.add(planet)
     db.session.commit()
-    return "ok", 200
+
+    planet_query = Planet.query.all()
+    all_planet = list(map(lambda x: x.serialize(), planet_query))
+
+    return jsonify(all_planet), 200
 
 
 
@@ -235,8 +243,10 @@ def add_new_vehicle():
     db.session.add(vehicle)
     db.session.commit()
     
+    vehicle_query = Vehicle.query.all()
+    all_vehicle = list(map(lambda x: x.serialize(), vehicle_query))
 
-    return "ok", 200
+    return jsonify(all_vehicle), 200
 
 
 @app.route('/vehicle/<int:id>', methods=['DELETE'])
@@ -252,6 +262,7 @@ def delete_vehicle(id):
     return jsonify(all_vehicle), 200
 
 ####################################### Favorites #################################################
+
 @app.route('/favorite/', methods=['GET'])
 def get_all_favs():
     fav_user = User.query.all()
@@ -261,8 +272,8 @@ def get_all_favs():
 @app.route('/favorite/<int:id>', methods=['GET'])
 @jwt_required()
 def get_user_fav(id):
-    loged_user = get_jwt_identity()    
-    if loged_user == id:
+    logged_user = get_jwt_identity()    
+    if logged_user == id:
         actual_user = User.query.filter_by(id=id).first()
         user_fav_character = FavoriteCharacter.query.filter_by(user_id=actual_user.id)
         fav_character = list(map(lambda x: x.serialize(), user_fav_character))
@@ -278,14 +289,10 @@ def get_user_fav(id):
     else: return "not valid"
 
 @app.route('/favorite/character/<int:character_id>', methods=['POST'])
+@jwt_required()
 def add_new_fav_character(character_id):
-    body = request.get_json()
-    if body is None:
-        raise APIException("You need to specify the request body as a json object", status_code=400)
-    if 'user_id' not in body:
-        raise APIException('You need to specify the user id', status_code=400)    
-    fav_character = FavoriteCharacter(user_id=body['user_id'], character_id=character_id)
-
+    logged_user = get_jwt_identity()     
+    fav_character = FavoriteCharacter(user_id=logged_user, character_id=character_id)
     db.session.add(fav_character)
     db.session.commit()
 
@@ -294,13 +301,10 @@ def add_new_fav_character(character_id):
     return jsonify(all_favs) , 200
 
 @app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
+@jwt_required()
 def add_new_fav_planet(planet_id):
-    body = request.get_json()
-    if body is None:
-        raise APIException("You need to specify the request body as a json object", status_code=400)
-    if 'user_id' not in body:
-        raise APIException('You need to specify the user id', status_code=400)    
-    fav_planet = FavoritePlanet(user_id=body['user_id'], planet_id=planet_id)
+    logged_user = get_jwt_identity()     
+    fav_planet = FavoritePlanet(user_id=logged_user, planet_id=planet_id)
 
     db.session.add(fav_planet)
     db.session.commit()
@@ -310,13 +314,10 @@ def add_new_fav_planet(planet_id):
     return jsonify(all_favs) , 200
 
 @app.route('/favorite/vehicle/<int:vehicle_id>', methods=['POST'])
+@jwt_required()
 def add_new_fav_vehicle(vehicle_id):
-    body = request.get_json()
-    if body is None:
-        raise APIException("You need to specify the request body as a json object", status_code=400)
-    if 'user_id' not in body:
-        raise APIException('You need to specify the user id', status_code=400)    
-    fav_vehicle = FavoriteVehicle(user_id=body['user_id'], vehicle_id=vehicle_id)
+    logged_user = get_jwt_identity()     
+    fav_vehicle = FavoriteVehicle(user_id=logged_user, vehicle_id=vehicle_id)
 
     db.session.add(fav_vehicle)
     db.session.commit()
@@ -328,8 +329,10 @@ def add_new_fav_vehicle(vehicle_id):
 @app.route('/favorite/character/<int:character_id>', methods=['DELETE'])
 @jwt_required()
 def delete_fav_character(character_id):
-    loged_user = get_jwt_identity()     
-    favorite = FavoriteCharacter.query.filter_by(user_id=loged_user, character_id=character_id).first()    
+    logged_user = get_jwt_identity()     
+    favorite = FavoriteCharacter.query.filter_by(user_id=logged_user, character_id=character_id).first()
+    if favorite is None:
+        raise APIException('User not found', status_code=404)    
     db.session.delete(favorite)
     db.session.commit()
 
@@ -339,21 +342,25 @@ def delete_fav_character(character_id):
 
 
 @app.route('/favorite/vehicle/<int:vehicle_id>', methods=['DELETE'])
+@jwt_required()
 def delete_fav_vehicle(vehicle_id):
-    
-    favorite = FavoriteVehicle.query.get(vehicle_id)
+    logged_user = get_jwt_identity() 
+    favorite = FavoriteVehicle.query.filter_by(user_id=logged_user, vehicle_id=vehicle_id).first()
     if favorite is None:
         raise APIException('User not found', status_code=404)
  
     db.session.delete(favorite)
     db.session.commit()
 
-    return "ok", 200
+    fav_query = FavoriteVehicle.query.all()
+    all_favs = list(map(lambda x: x.serialize(), fav_query))
+    return jsonify(all_favs) , 200
 
 @app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
+@jwt_required()
 def delete_fav_planet(planet_id):
-    
-    favorite = FavoritePlanet.query.get(planet_id)
+    logged_user = get_jwt_identity() 
+    favorite = FavoritePlanet.query.filter_by(user_id=logged_user, planet_id=planet_id).first()
     if favorite is None:
         raise APIException('User not found', status_code=404)
         
@@ -361,7 +368,9 @@ def delete_fav_planet(planet_id):
     db.session.delete(favorite)
     db.session.commit()
 
-    return "ok", 200
+    fav_query = FavoritePlanet.query.all()
+    all_favs = list(map(lambda x: x.serialize(), fav_query))
+    return jsonify(all_favs) , 200
 
 
 # this only runs if `$ python src/main.py` is executed
