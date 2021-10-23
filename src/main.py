@@ -16,6 +16,7 @@ from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
 from flask_jwt_extended import JWTManager
+from werkzeug.security import generate_password_hash, check_password_hash
 #from models import Person
 
 app = Flask(__name__)
@@ -43,18 +44,47 @@ def sitemap():
 
 @app.route("/login", methods=["POST"])
 def create_token():
-    email = request.json.get("email", None)
+    username = request.json.get("username", None)
     password = request.json.get("password", None)
-    # Query your database for email and password
-    user = User.query.filter_by(email=email, password=password).first()
-    if user is None:
-        # the user was not found on the database
-        return jsonify({"msg": "Bad email or password"}), 401
+    # Query your database for username and password
+    user = User.query.filter_by(username=username, password=password).first()
     
-    # create a new token with the user id inside
+    if user is None:
+        return jsonify({"msg": "Bad username or password"}), 401
+
+
     access_token = create_access_token(identity=user.id)
     return jsonify({ "token": access_token, "user_id": user.id })
 
+@app.route('/signup', methods=['POST'])
+def register():
+    body = request.get_json()
+    if body is None:
+        raise APIException("You need to specify the request body as a json object", status_code=400)
+    if 'username' not in body:
+        raise APIException('You need to specify the username', status_code=400)
+    if 'password' not in body:
+        raise APIException('You need to specify the password', status_code=400)
+    if 'is_active' not in body:
+        raise APIException('You need to specify the is_active', status_code=400)
+    # user_created = User.query.filter_by(username=body['username'])
+    # if user_created == body['username']: return "user already created"
+
+    user = User(username=body['username'], password=body['password'],is_active=body['is_active'] )
+    db.session.add(user)
+    db.session.commit()
+    return jsonify({
+        "status":"user created",
+        "user": user.serialize()
+    }) , 200
+   
+
+@app.route("/current_user", methods=["GET"])
+@jwt_required()
+def protected():
+    # Access the identity of the current user with get_jwt_identity
+    current_user = get_jwt_identity()
+    return jsonify(logged_in_as=current_user), 200
 
 ##################### Users ##############################################################################
 @app.route('/user', methods=['GET'])
@@ -70,21 +100,6 @@ def get_user_index(id):
     user = selected_user.serialize()
     return user, 200
 
-@app.route('/user', methods=['POST'])
-def add_new_user():
-    body = request.get_json()
-    if body is None:
-        raise APIException("You need to specify the request body as a json object", status_code=400)
-    if 'email' not in body:
-        raise APIException('You need to specify the email', status_code=400)
-    if 'password' not in body:
-        raise APIException('You need to specify the password', status_code=400)
-    if 'is_active' not in body:
-        raise APIException('You need to specify the is_active', status_code=400)           
-    user = User(email=body['email'], password=body['password'],is_active=body['is_active'] )
-    db.session.add(user)
-    db.session.commit()
-    return "ok", 200
 
 @app.route('/user/<int:id>', methods=['DELETE'])
 def delete_user(id):
@@ -243,20 +258,24 @@ def get_all_favs():
     fav = list(map(lambda x: x.serialize(), fav_user))
     return jsonify(fav), 200
 
-@app.route('/favorite/<email>', methods=['GET'])
-def get_user_fav(email):
-    actual_user = User.query.filter_by(email=email).first()
-    user_fav_character = FavoriteCharacter.query.filter_by(user_id=actual_user.id)
-    fav_character = list(map(lambda x: x.serialize(), user_fav_character))
+@app.route('/favorite/<int:id>', methods=['GET'])
+@jwt_required()
+def get_user_fav(id):
+    loged_user = get_jwt_identity()    
+    if loged_user == id:
+        actual_user = User.query.filter_by(id=id).first()
+        user_fav_character = FavoriteCharacter.query.filter_by(user_id=actual_user.id)
+        fav_character = list(map(lambda x: x.serialize(), user_fav_character))
 
-    user_fav_planet = FavoritePlanet.query.filter_by(user_id=actual_user.id)
-    fav_planet = list(map(lambda x: x.serialize(), user_fav_planet))
+        user_fav_planet = FavoritePlanet.query.filter_by(user_id=actual_user.id)
+        fav_planet = list(map(lambda x: x.serialize(), user_fav_planet))
 
-    user_fav_vehicle = FavoriteVehicle.query.filter_by(user_id=actual_user.id)
-    fav_vehicle = list(map(lambda x: x.serialize(), user_fav_vehicle))
+        user_fav_vehicle = FavoriteVehicle.query.filter_by(user_id=actual_user.id)
+        fav_vehicle = list(map(lambda x: x.serialize(), user_fav_vehicle))
 
-    fav = fav_character+fav_planet+fav_vehicle
-    return jsonify(fav), 200
+        fav = fav_character+fav_planet+fav_vehicle
+        return jsonify(fav), 200
+    else: return "not valid"
 
 @app.route('/favorite/character/<int:character_id>', methods=['POST'])
 def add_new_fav_character(character_id):
@@ -306,14 +325,18 @@ def add_new_fav_vehicle(vehicle_id):
     all_favs = list(map(lambda x: x.serialize(), fav_query))
     return jsonify(all_favs) , 200
 
-@app.route('/favorite/character/<int:id>', methods=['DELETE'])
-def delete_fav_character(id):
-    favorite = FavoriteCharacter.query.get(id)
-    
+@app.route('/favorite/character/<int:character_id>', methods=['DELETE'])
+@jwt_required()
+def delete_fav_character(character_id):
+    loged_user = get_jwt_identity()     
+    favorite = FavoriteCharacter.query.filter_by(user_id=loged_user, character_id=character_id).first()    
     db.session.delete(favorite)
     db.session.commit()
 
-    return "ok", 200
+    fav_query = FavoriteCharacter.query.all()
+    all_favs = list(map(lambda x: x.serialize(), fav_query))
+    return jsonify(all_favs) , 200
+
 
 @app.route('/favorite/vehicle/<int:vehicle_id>', methods=['DELETE'])
 def delete_fav_vehicle(vehicle_id):
