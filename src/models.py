@@ -8,9 +8,9 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), unique=False, nullable=False)
     is_active = db.Column(db.Boolean(), unique=False, nullable=False)
-    favorite_characters = db.relationship('FavoriteCharacter', passive_deletes=True)
-    favorite_planets = db.relationship('FavoritePlanet', passive_deletes=True)
-    favorite_vehicles = db.relationship('FavoriteVehicle', passive_deletes=True)
+    favorite_characters = db.relationship('FavoriteCharacter', passive_deletes=True, back_populates="user")
+    favorite_planets = db.relationship('FavoritePlanet', passive_deletes=True, back_populates="user")
+    favorite_vehicles = db.relationship('FavoriteVehicle', passive_deletes=True, back_populates="user")
     
 
     def __repr__(self):
@@ -90,7 +90,7 @@ class FavoriteCharacter(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     character_id = db.Column(db.Integer, db.ForeignKey('character.id', ondelete='CASCADE'))
-    user = db.relationship(User)
+    user = db.relationship(User, back_populates="favorite_characters")
     character = db.relationship(Character)
 
 
@@ -110,7 +110,7 @@ class FavoritePlanet(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     planet_id = db.Column(db.Integer, db.ForeignKey('planet.id', ondelete='CASCADE'))
-    user = db.relationship(User)
+    user = db.relationship(User, back_populates="favorite_planets")
     planet = db.relationship(Planet)
 
 
@@ -130,7 +130,7 @@ class FavoriteVehicle(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id', ondelete='CASCADE'))
-    user = db.relationship(User)
+    user = db.relationship(User, back_populates="favorite_vehicles")
     vehicle = db.relationship(Vehicle)
 
 

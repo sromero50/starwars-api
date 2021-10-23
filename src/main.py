@@ -12,6 +12,10 @@ from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, User, Character, Planet, Vehicle, FavoriteCharacter, FavoritePlanet, FavoriteVehicle
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
 #from models import Person
 
 app = Flask(__name__)
@@ -23,7 +27,8 @@ db.init_app(app)
 CORS(app)
 setup_admin(app)
 
-
+app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this "super secret" with something else!
+jwt = JWTManager(app)
 
 # Handle/serialize errors like a JSON object
 @app.errorhandler(APIException)
@@ -34,6 +39,21 @@ def handle_invalid_usage(error):
 @app.route('/')
 def sitemap():
     return generate_sitemap(app)
+
+
+@app.route("/login", methods=["POST"])
+def create_token():
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+    # Query your database for email and password
+    user = User.query.filter_by(email=email, password=password).first()
+    if user is None:
+        # the user was not found on the database
+        return jsonify({"msg": "Bad email or password"}), 401
+    
+    # create a new token with the user id inside
+    access_token = create_access_token(identity=user.id)
+    return jsonify({ "token": access_token, "user_id": user.id })
 
 
 ##################### Users ##############################################################################
@@ -199,6 +219,8 @@ def add_new_vehicle():
     vehicle = Vehicle(name=body['name'], vehicle_class=body['vehicle_class'], manufacturer=body['manufacturer'])
     db.session.add(vehicle)
     db.session.commit()
+    
+
     return "ok", 200
 
 
@@ -209,55 +231,85 @@ def delete_vehicle(id):
         raise APIException('User not found', status_code=404)
     db.session.delete(vehicle)
     db.session.commit()
-    vehicle_query = vehicle.query.all()
+    vehicle_query = Vehicle.query.all()
     all_vehicle = list(map(lambda x: x.serialize(), vehicle_query))
 
     return jsonify(all_vehicle), 200
 
 ####################################### Favorites #################################################
 @app.route('/favorite/', methods=['GET'])
-def get_fav_character():
+def get_all_favs():
     fav_user = User.query.all()
     fav = list(map(lambda x: x.serialize(), fav_user))
     return jsonify(fav), 200
 
+@app.route('/favorite/<email>', methods=['GET'])
+def get_user_fav(email):
+    actual_user = User.query.filter_by(email=email).first()
+    user_fav_character = FavoriteCharacter.query.filter_by(user_id=actual_user.id)
+    fav_character = list(map(lambda x: x.serialize(), user_fav_character))
 
-@app.route('/user/<int:user_id>/favorite/character/<int:character_id>', methods=['POST'])
-def add_new_fav_character(character_id,user_id):
-    favorite = FavoriteCharacter(user_id=user_id ,character_id=character_id)
-    db.session.add(favorite)
+    user_fav_planet = FavoritePlanet.query.filter_by(user_id=actual_user.id)
+    fav_planet = list(map(lambda x: x.serialize(), user_fav_planet))
+
+    user_fav_vehicle = FavoriteVehicle.query.filter_by(user_id=actual_user.id)
+    fav_vehicle = list(map(lambda x: x.serialize(), user_fav_vehicle))
+
+    fav = fav_character+fav_planet+fav_vehicle
+    return jsonify(fav), 200
+
+@app.route('/favorite/character/<int:character_id>', methods=['POST'])
+def add_new_fav_character(character_id):
+    body = request.get_json()
+    if body is None:
+        raise APIException("You need to specify the request body as a json object", status_code=400)
+    if 'user_id' not in body:
+        raise APIException('You need to specify the user id', status_code=400)    
+    fav_character = FavoriteCharacter(user_id=body['user_id'], character_id=character_id)
+
+    db.session.add(fav_character)
     db.session.commit()
-    return "ok", 200
 
-@app.route('/user/<int:user_id>/favorite/planet/<int:planet_id>', methods=['POST'])
-def add_new_fav_planet(planet_id,user_id):
-    favorite = FavoritePlanet(user_id=user_id ,planet_id=planet_id)
-    db.session.add(favorite)
+    fav_query = FavoriteCharacter.query.all()
+    all_favs = list(map(lambda x: x.serialize(), fav_query))
+    return jsonify(all_favs) , 200
+
+@app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
+def add_new_fav_planet(planet_id):
+    body = request.get_json()
+    if body is None:
+        raise APIException("You need to specify the request body as a json object", status_code=400)
+    if 'user_id' not in body:
+        raise APIException('You need to specify the user id', status_code=400)    
+    fav_planet = FavoritePlanet(user_id=body['user_id'], planet_id=planet_id)
+
+    db.session.add(fav_planet)
     db.session.commit()
-    return "ok", 200
 
-@app.route('/user/<int:user_id>/favorite/vehicle/<int:vehicle_id>', methods=['POST'])
-def add_new_fav_vehicle(vehicle_id,user_id):
-    favorite = FavoriteVehicle(user_id=user_id ,vehicle_id=vehicle_id)
-    db.session.add(favorite)
+    fav_query = FavoritePlanet.query.all()
+    all_favs = list(map(lambda x: x.serialize(), fav_query))
+    return jsonify(all_favs) , 200
+
+@app.route('/favorite/vehicle/<int:vehicle_id>', methods=['POST'])
+def add_new_fav_vehicle(vehicle_id):
+    body = request.get_json()
+    if body is None:
+        raise APIException("You need to specify the request body as a json object", status_code=400)
+    if 'user_id' not in body:
+        raise APIException('You need to specify the user id', status_code=400)    
+    fav_vehicle = FavoriteVehicle(user_id=body['user_id'], vehicle_id=vehicle_id)
+
+    db.session.add(fav_vehicle)
     db.session.commit()
-    return "ok", 200
 
-@app.route('/favorite/character/<int:character_id>', methods=['DELETE'])
-def delete_fav_character(character_id):
+    fav_query = FavoritePlanet.query.all()
+    all_favs = list(map(lambda x: x.serialize(), fav_query))
+    return jsonify(all_favs) , 200
+
+@app.route('/favorite/character/<int:id>', methods=['DELETE'])
+def delete_fav_character(id):
+    favorite = FavoriteCharacter.query.get(id)
     
-    favorite = FavoriteCharacter.query.get(character_id)
-    if favorite is None:
-        raise APIException('User not found', status_code=404)
-    # fav = favorite.serialize()
-    
-    # print(fav['favorite_characters'])
-    # for i in fav['favorite_characters']:
-    #     if i['user_id']==user_id and i['character_id']==character_id:
-    #         fav['favorite_characters'].remove(i)
-    #     break
-        
-        
     db.session.delete(favorite)
     db.session.commit()
 
@@ -269,15 +321,7 @@ def delete_fav_vehicle(vehicle_id):
     favorite = FavoriteVehicle.query.get(vehicle_id)
     if favorite is None:
         raise APIException('User not found', status_code=404)
-    # fav = favorite.serialize()
-    
-    # print(fav['favorite_characters'])
-    # for i in fav['favorite_characters']:
-    #     if i['user_id']==user_id and i['character_id']==character_id:
-    #         fav['favorite_characters'].remove(i)
-    #     break
-        
-        
+ 
     db.session.delete(favorite)
     db.session.commit()
 
@@ -289,13 +333,6 @@ def delete_fav_planet(planet_id):
     favorite = FavoritePlanet.query.get(planet_id)
     if favorite is None:
         raise APIException('User not found', status_code=404)
-    # fav = favorite.serialize()
-    
-    # print(fav['favorite_characters'])
-    # for i in fav['favorite_characters']:
-    #     if i['user_id']==user_id and i['character_id']==character_id:
-    #         fav['favorite_characters'].remove(i)
-    #     break
         
         
     db.session.delete(favorite)
@@ -303,16 +340,6 @@ def delete_fav_planet(planet_id):
 
     return "ok", 200
 
-# @app.route('/favorite/character/<int:user_id>', methods=['DELETE'])
-# def delete_fav_character(user_id):
-#     fav = FavoriteCharacter.query.get(user_id)
-#     if fav is None:
-#         raise APIException('User not found', status_code=404)
-        
-#     db.session.delete(fav)
-#     db.session.commit()
-
-#     return "ok", 200
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
