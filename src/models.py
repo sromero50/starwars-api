@@ -88,7 +88,7 @@ class Vehicle(db.Model):
 class FavoriteCharacter(db.Model):
     __tablename__ = 'favoriteCharacter'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     character_id = db.Column(db.Integer, db.ForeignKey('character.id', ondelete='CASCADE'))
     user = db.relationship(User, back_populates="favorite_characters")
     character = db.relationship(Character)
@@ -108,7 +108,7 @@ class FavoriteCharacter(db.Model):
 class FavoritePlanet(db.Model):
     __tablename__ = 'favoritePlanet'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     planet_id = db.Column(db.Integer, db.ForeignKey('planet.id', ondelete='CASCADE'))
     user = db.relationship(User, back_populates="favorite_planets")
     planet = db.relationship(Planet)
@@ -128,7 +128,7 @@ class FavoritePlanet(db.Model):
 class FavoriteVehicle(db.Model):
     __tablename__ = 'FavoriteVehicle'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
     vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id', ondelete='CASCADE'))
     user = db.relationship(User, back_populates="favorite_vehicles")
     vehicle = db.relationship(Vehicle)
@@ -146,27 +146,4 @@ class FavoriteVehicle(db.Model):
         }
 
 
-# class Favorite(db.Model):
-#     __tablename__ = 'favorite'
-#     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-#     fav_character_id = db.Column(db.Integer, db.ForeignKey('favoriteCharacter.id'))
-#     fav_planet_id = db.Column(db.Integer, db.ForeignKey('favoritePlanet.id'))
-#     fav_vehicle_id = db.Column(db.Integer, db.ForeignKey('FavoriteVehicle.id'))
-#     user = db.relationship(User)
-#     favorite_characters = db.relationship('FavoriteCharacter')
-#     favorite_planets = db.relationship('FavoritePlanet')
-#     favorite_vehicles = db.relationship('FavoriteVehicle')
-    
 
-#     def __repr__(self):
-#         return '<Favorite %r>' % self.user_id
-
-
-#     def serialize(self):
-#         return {
-#             "user_id": self.user_id,
-#             "favorite_characters": list(map(lambda x: x.serialize(), self.favorite_characters)),
-#             "favorite_planets": list(map(lambda x: x.serialize(), self.favorite_planets)),
-#             "favorite_vehicles": list(map(lambda x: x.serialize(), self.favorite_vehicles))
-
-#         }

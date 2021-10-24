@@ -96,19 +96,21 @@ def get_users():
 
     return jsonify(all_user), 200
 
-@app.route('/user/<int:id>', methods=['GET'])
-def get_user_index(id):
-    selected_user = User.query.get(id)
-    user = selected_user.serialize()
+@app.route('/user/<username>', methods=['GET'])
+@jwt_required()
+def get_user_index(username):
+    logged_user = get_jwt_identity()    
+    actual_user = User.query.filter_by(id=logged_user, username=username).first()
+    user = actual_user.serialize()
     return user, 200
 
 
-@app.route('/user/<int:id>', methods=['DELETE'])
-def delete_user(id):
-    user1 = User.query.get(id)
-    if user1 is None:
-        raise APIException('User not found', status_code=404)
-    db.session.delete(user1)
+@app.route('/user/<username>', methods=['DELETE'])
+@jwt_required()
+def delete_user(username):
+    logged_user = get_jwt_identity()    
+    actual_user = User.query.filter_by(id=logged_user, username=username).first()
+    db.session.delete(actual_user)
     db.session.commit()
     user_query = User.query.all()
     all_user = list(map(lambda x: x.serialize(), user_query))
@@ -269,24 +271,23 @@ def get_all_favs():
     fav = list(map(lambda x: x.serialize(), fav_user))
     return jsonify(fav), 200
 
-@app.route('/favorite/<int:id>', methods=['GET'])
+@app.route('/favorite/<username>', methods=['GET'])
 @jwt_required()
-def get_user_fav(id):
+def get_user_fav(username):
     logged_user = get_jwt_identity()    
-    if logged_user == id:
-        actual_user = User.query.filter_by(id=id).first()
-        user_fav_character = FavoriteCharacter.query.filter_by(user_id=actual_user.id)
-        fav_character = list(map(lambda x: x.serialize(), user_fav_character))
+    actual_user = User.query.filter_by(id=logged_user, username=username).first()
+    user_fav_character = FavoriteCharacter.query.filter_by(user_id=actual_user.id)
+    fav_character = list(map(lambda x: x.serialize(), user_fav_character))
 
-        user_fav_planet = FavoritePlanet.query.filter_by(user_id=actual_user.id)
-        fav_planet = list(map(lambda x: x.serialize(), user_fav_planet))
+    user_fav_planet = FavoritePlanet.query.filter_by(user_id=actual_user.id)
+    fav_planet = list(map(lambda x: x.serialize(), user_fav_planet))
 
-        user_fav_vehicle = FavoriteVehicle.query.filter_by(user_id=actual_user.id)
-        fav_vehicle = list(map(lambda x: x.serialize(), user_fav_vehicle))
+    user_fav_vehicle = FavoriteVehicle.query.filter_by(user_id=actual_user.id)
+    fav_vehicle = list(map(lambda x: x.serialize(), user_fav_vehicle))
 
-        fav = fav_character+fav_planet+fav_vehicle
-        return jsonify(fav), 200
-    else: return "not valid"
+    fav = fav_character+fav_planet+fav_vehicle
+    return jsonify(fav), 200
+
 
 @app.route('/favorite/character/<int:character_id>', methods=['POST'])
 @jwt_required()
