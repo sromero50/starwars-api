@@ -34,7 +34,9 @@ class Character(db.Model):
     gender = db.Column(db.String(150), nullable=False)
     hair_color = db.Column(db.String(150), nullable=False)
     eye_color = db.Column(db.String(150),  nullable=False)
-    
+    birth_year = db.Column(db.Integer,  nullable=False)
+    skin_color = db.Column(db.String(150),  nullable=False)
+    height = db.Column(db.Integer,  nullable=False)
 
     def __repr__(self):
         return '<Character %r>' % self.name
@@ -45,7 +47,10 @@ class Character(db.Model):
             "name": self.name,
             "gender": self.gender,
             "hair_color": self.hair_color,
-            "eye_color": self.eye_color
+            "eye_color": self.eye_color,
+            "birth_year": self.birth_year,
+            "skin_color": self.skin_color,
+            "height": self.height
         }
 
 class Planet(db.Model):
@@ -54,6 +59,8 @@ class Planet(db.Model):
     name = db.Column(db.String(150), nullable=False)
     population = db.Column(db.Integer, nullable=False)
     terrain = db.Column(db.String(150), nullable=False)
+    climate = db.Column(db.String(150), nullable=False)
+
 
     def __repr__(self):
         return '<Planet %r>' % self.name
@@ -63,7 +70,8 @@ class Planet(db.Model):
             "id": self.id,
             "name": self.name,
             "population": self.population,
-            "terrain": self.terrain
+            "terrain": self.terrain,
+            "climate": self.climate
         }
 
 class Vehicle(db.Model):
@@ -72,7 +80,8 @@ class Vehicle(db.Model):
     name = db.Column(db.String(150), nullable=False)
     vehicle_class = db.Column(db.String(150), nullable=False)
     manufacturer = db.Column(db.String(150), nullable=False)
-
+    cost_in_credits = db.Column(db.Integer, nullable=False)
+    passengers = db.Column(db.Integer, nullable=False)
     
     def __repr__(self):
         return '<Vehicle %r>' % self.name
@@ -82,7 +91,9 @@ class Vehicle(db.Model):
             "id": self.id,
             "name": self.name,
             "vehicle_class": self.vehicle_class,
-            "manufacturer": self.manufacturer
+            "manufacturer": self.manufacturer,
+            "cost_in_credits": self.cost_in_credits,
+            "passengers": self.passengers
         }
 
 class FavoriteCharacter(db.Model):
