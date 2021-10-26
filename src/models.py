@@ -32,11 +32,11 @@ class Character(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
     gender = db.Column(db.String(150), nullable=False)
-    hair_color = db.Column(db.String(150), nullable=False)
-    eye_color = db.Column(db.String(150),  nullable=False)
-    birth_year = db.Column(db.Integer,  nullable=False)
+    hair_color = db.Column(db.String(150), nullable=True)
+    eye_color = db.Column(db.String(150),  nullable=True)
+    birth_year = db.Column(db.String(150),  nullable=True)
     skin_color = db.Column(db.String(150),  nullable=False)
-    height = db.Column(db.Integer,  nullable=False)
+    height = db.Column(db.String(150),  nullable=True)
 
     def __repr__(self):
         return '<Character %r>' % self.name
@@ -57,7 +57,7 @@ class Planet(db.Model):
     __tablename__ = 'planet'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
-    population = db.Column(db.Integer, nullable=False)
+    population = db.Column(db.Integer, nullable=True)
     terrain = db.Column(db.String(150), nullable=False)
     climate = db.Column(db.String(150), nullable=False)
 
@@ -80,8 +80,8 @@ class Vehicle(db.Model):
     name = db.Column(db.String(150), nullable=False)
     vehicle_class = db.Column(db.String(150), nullable=False)
     manufacturer = db.Column(db.String(150), nullable=False)
-    cost_in_credits = db.Column(db.Integer, nullable=False)
-    passengers = db.Column(db.Integer, nullable=False)
+    cost_in_credits = db.Column(db.Integer, nullable=True)
+    passengers = db.Column(db.Integer, nullable=True)
     
     def __repr__(self):
         return '<Vehicle %r>' % self.name

@@ -145,7 +145,7 @@ def add_new_character():
         raise APIException('You need to specify the hair color', status_code=400)
     if 'eye_color' not in body:
         raise APIException('You need to specify the eye color', status_code=400)            
-    character1 = Character(name=body['name'], gender=body['gender'], hair_color=body['hair_color'], eye_color=body["eye_color"])
+    character1 = Character(name=body['name'], gender=body['gender'], hair_color=body['hair_color'], eye_color=body["eye_color"], skin_color=body["skin_color"], height=body["height"],birth_year=body["birth_year"])
     db.session.add(character1)
     db.session.commit()
     character_query = Character.query.all()
@@ -191,7 +191,7 @@ def add_new_planet():
         raise APIException('You need to specify the population', status_code=400)
     if 'terrain' not in body:
         raise APIException('You need to specify the terrain', status_code=400)        
-    planet = Planet(name=body['name'], population=body['population'], terrain=body['terrain'])
+    planet = Planet(name=body['name'], population=body['population'], terrain=body['terrain'], climate=body['climate'])
     db.session.add(planet)
     db.session.commit()
 
@@ -241,7 +241,7 @@ def add_new_vehicle():
         raise APIException('You need to specify the vehicle class', status_code=400)
     if 'manufacturer' not in body:
         raise APIException('You need to specify the manufacturer', status_code=400)        
-    vehicle = Vehicle(name=body['name'], vehicle_class=body['vehicle_class'], manufacturer=body['manufacturer'])
+    vehicle = Vehicle(name=body['name'], vehicle_class=body['vehicle_class'], manufacturer=body['manufacturer'],cost_in_credits=body['cost_in_credits'],passengers=body['passengers'])
     db.session.add(vehicle)
     db.session.commit()
     
